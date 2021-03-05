@@ -1,9 +1,11 @@
 # PDFSpeedReading
 This is a desktop application that allows you to select a range of pages that you have completely read, the time you have read for and calculate the words per minutes.
+
 You can view your WPM history across all the different books you have read
 
 # visualize
 Using matplotlib to see your progress
+
 The wpm history is saved as "speed_wpm.txt", and the graph is based on that file
 
 If you choose to delete a recording, you simply delete it in the text file
