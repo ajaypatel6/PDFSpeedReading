@@ -1,6 +1,9 @@
 import os
-import matplotlib
-matplotlib.use("TkAgg")
+from math import floor, log10
+
+import matplotlib.pyplot as plt
+
+# matplotlib.use("TkAgg")
 # ?
 import fitz
 from tkinter import *
@@ -10,9 +13,14 @@ import tkinter as tk
 from tkinter import filedialog
 # from tkinter.filedialog import askopenfile
 from PIL import ImageTk, Image
-import pickle
+import numpy as np
+# import pickle
 
 readingSpeed = 0
+
+
+if not os.path.exists('speed_wpm.txt'):
+    open('speed_wpm.txt', 'w').close()
 
 window = tk.Tk()
 window.title("Reading Speed Tracker from PDF")
@@ -53,7 +61,7 @@ enterRange = Label(window, text="Enter pages completely read below (from in top,
 enterRange.grid(row=9, column=0)
 
 # warningLabel = Label(window, text="Enter all fields above before calculating ", bg="#009BFF", fg="#FF6400",
-                    # font="none 12 bold")
+# font="none 12 bold")
 # warningLabel.grid(row=17)
 
 # input
@@ -73,6 +81,7 @@ enter_txt.set("Select Book and Calculate WPM")
 def open_file():
     filepath = filedialog.askopenfilename(title="Open PDF", filetypes=[('pdf file', '*.pdf')])
     print(filepath)
+    # noinspection PyUnresolvedReferences
     filename = fitz.open(filepath)
     return filename
 
@@ -87,7 +96,7 @@ def calculate():
     words = [s for s in file.load_page(from_page).get_text() if s == ' ' or s == '\n']
 
     while from_page != to_page:
-        from_page = from_page+1
+        from_page = from_page + 1
         words += [s for s in file.load_page(from_page).get_text() if s == ' ' or s == '\n']
 
     sp = len(words)
@@ -109,16 +118,21 @@ enter_btn = Button(window, textvariable=enter_txt, width=25, command=calculate, 
 enter_btn.grid(row=16, column=0)
 
 
+def round_to_1(x):
+    return round(x, -int(floor(log10(abs(x)))))
+
+
 # save to txt file? and then pull data
 def save():
     save_txt.set("Saved ")
     if os.path.getsize("speed_wpm.txt") == 0:
         outfile = open('speed_wpm.txt', 'w')
-        outfile.write(str(readingSpeed))
+        outfile.write(str(round(readingSpeed)))
     else:
         outfile = open("speed_wpm.txt", 'a+')
-        outfile.write(str(readingSpeed) + '\n')
+        outfile.write('\n' + str(round(readingSpeed)))
     pass
+    # update count, by reading the line amount? or new file
 
 
 # SAVE
@@ -140,19 +154,50 @@ def view():
     pass
 
 
+view_btn = Button(window, textvariable=view_text, width=10, command=view, height=2)
+view_btn.grid(row=16, column=0, sticky="E")
+
+
 # load history from file
-def load_history():
-    pass
+def load_count():
+    with open("speed_wpm.txt") as file_in:
+        sessions = []
+        count = 0
+        for line in file_in:
+            count = count + 1
+            sessions.append(count)
+    print(sessions)
+    file_in.close()
+    return sessions
 
 
+def load_wpm():
+    with open("speed_wpm.txt") as file_in:
+        wpm_list = []
+        for line in file_in:
+            wpm_list.append(float(line.strip()))
+    print(wpm_list)
+    file_in.close()
+    return wpm_list
+
+
+# also have average to compare
 # populate the graph
-def populate_graph():
-    pass
+# chart options
+def populate_graph(sessions, wpm_list):
+    plt.bar(sessions, wpm_list)
+    plt.title("WPM history")
+
+    plt.xlim([0, len(sessions)+1])
+    plt.ylim([min(wpm_list) - 10, max(wpm_list)+10])
+    plt.xlabel("Session ")
+    plt.ylabel("WPM")
+
+    plt.show()
 
 
 def open_new_window():
-    load_history()
-    populate_graph()
+    populate_graph(load_count(), load_wpm())
     newWindow = Toplevel(window)
 
     newWindow.title("Stats")
@@ -162,9 +207,6 @@ def open_new_window():
     Label(newWindow,
           text="WPM history").pack()
 
-
-view_btn = Button(window, textvariable=view_text, width=10, command=view, height=2)
-view_btn.grid(row=16, column=0, sticky="E")
 
 # End window
 window.mainloop()
