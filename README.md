@@ -19,3 +19,4 @@ Better visualization
 Comparison between users
 Book specific history
 Different data visualization options
+bar chart/ plot chart options
